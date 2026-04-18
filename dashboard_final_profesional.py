@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 # ============================================
 
 st.set_page_config(
-    page_title="Predicción USD/PEN - Twitter Sentiment Analysis",
+    page_title="Predicción USD/PEN - Twitter Sentiment Analysis TEST",
     page_icon="💹",
     layout="wide",
     initial_sidebar_state="expanded"
