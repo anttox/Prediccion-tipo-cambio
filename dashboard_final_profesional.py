@@ -272,7 +272,7 @@ def cargar_datos_completos():
     try:
         # Cargar datos del archivo Excel
         archivo_path = 'tweets_GOZU_SENTIMIENTO_MEJORADO.xlsx'
-        df = pd.read_excel(archivo_path)
+        df = pd.read_excel(archivo_path, engine='openpyxl')
 
         # Procesamiento básico
         df['Fecha'] = pd.to_datetime(df['TweetCreateTime']).dt.date
