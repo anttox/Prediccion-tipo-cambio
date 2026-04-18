@@ -787,7 +787,7 @@ def main():
     col_titulo1, col_titulo2 = st.columns([3, 1])
 
     with col_titulo1:
-        st.markdown('<h1 class="titulo-principal">Predicción de la Direccionalidad del Tipo de Cambio USD/PEN mediante Análisis de Sentimiento en Twitter/X durante Elecciones en Perú TEST</h1>', unsafe_allow_html=True)
+        st.markdown('<h1 class="titulo-principal">Predicción de la Direccionalidad del Tipo de Cambio USD/PEN mediante Análisis de Sentimiento en Twitter/X durante Elecciones en Perú</h1>', unsafe_allow_html=True)
         st.markdown('<p class="subtitulo">Sistema predictivo basado en análisis de sentimiento político | Elecciones Presidenciales 2021</p>', unsafe_allow_html=True)
 
     with col_titulo2:
