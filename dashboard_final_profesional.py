@@ -1196,7 +1196,7 @@ def main():
             - Todos: Muestra todas las predicciones
             - Solo Aciertos: Predicciones correctas
             - Solo Errores: Predicciones incorrectas
-            ""))
+            """)
 
     # --- Datos filtrados ---
     df_filtrado = filtrar_por_fecha(df_completo, fecha_inicio, fecha_fin)
