@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -595,7 +596,7 @@ def crear_grafico_principal(df):
             showlegend=False,
             hoverinfo='text',
             hovertext=f"<b>{row['Fecha'].strftime('%d/%m')}</b><br>S/ {row['Compra']:.4f}<br>"
-                      f"{'✅ Acierto' if row['Acierto'] else '❌ Error'} {row['Variacion_Dolar']:+.2f}%<br>"
+                      f"{'Acierto' if row['Acierto'] else 'Error'} {row['Variacion_Dolar']:+.2f}%<br>"
                       f"Señal: {'LONG ▲' if row['Prediccion']==1 else 'SHORT ▼'}"
         ))
 
@@ -794,8 +795,8 @@ def crear_grafico_composicion_politica(df):
 
     # Anotaciones de eventos electorales clave
     eventos = [
-        {'fecha': '2021-04-11', 'texto': '1ª Vuelta', 'color': COLORES['advertencia']},
-        {'fecha': '2021-06-06', 'texto': '2ª Vuelta', 'color': COLORES['primario']},
+        {'fecha': '2021-04-11', 'texto': '1a Vuelta', 'color': COLORES['advertencia']},
+        {'fecha': '2021-06-06', 'texto': '2a Vuelta', 'color': COLORES['primario']},
     ]
     for ev in eventos:
         ts = pd.Timestamp(ev['fecha'])
@@ -915,7 +916,7 @@ def mostrar_cards_trader(ma):
     datos_cards = [
         # (col, color_clase, label, valor_str, bench_txt, badge_html, tooltip)
         (col1, "azul",   "Precisión Global",
-         f"{ma['precision']:.1f}%" if 'precision' in ma else "—",
+         f"{ma['precision']:.1f}%" if 'precision' in ma else "N/A",
          "Benchmark: >55% supera el azar",
          _badge(ma.get('precision', 0), [65, 55]),
          "% de días en que el modelo acertó la dirección"),
@@ -1078,9 +1079,9 @@ def mostrar_guia_rapida():
         <div style='background: #1a1d29; padding: 12px; border-radius: 6px; border: 1px solid #2a2f3d;'>
             <b style='color: #4a6fff;'>Información en Tooltips (Sentimiento):</b><br>
             <span style='color: #a0a4b3; font-size: 0.9rem;'>
-            • <b>Influencia predominante:</b> Anti-Castillo / Anti-Keiko / Neutral<br>
-            • <b>Distribución:</b> % de tweets por categoría<br>
-            • <b>Razones:</b> Patrones detectados (IZQUIERDA, ERROR_FACTUAL, etc.)
+            &bull; <b>Influencia predominante:</b> Anti-Castillo / Anti-Keiko / Neutral<br>
+            &bull; <b>Distribucion:</b> % de tweets por categoría<br>
+            &bull; <b>Razones:</b> Patrones detectados (IZQUIERDA, ERROR_FACTUAL, etc.)
             </span>
         </div>
         """, unsafe_allow_html=True)
@@ -1196,7 +1197,7 @@ def main():
             - Todos: Muestra todas las predicciones
             - Solo Aciertos: Predicciones correctas
             - Solo Errores: Predicciones incorrectas
-            """)
+            ")
 
     # --- Datos filtrados ---
     df_filtrado = filtrar_por_fecha(df_completo, fecha_inicio, fecha_fin)
@@ -1207,7 +1208,7 @@ def main():
         return
 
     metricas   = calcular_metricas(df_filtrado)
-    ma         = calcular_metricas_avanzadas(df_filtrado)   # ← NUEVO: cálculo único
+    ma         = calcular_metricas_avanzadas(df_filtrado)   # NUEVO: calculo unico
     ma['precision'] = metricas.get('precision', 0)          # añadir precision al dict
 
     # ============================================
@@ -1217,13 +1218,14 @@ def main():
     mostrar_cards_trader(ma)
 
     # Advertencia de sesgo temporal (debajo de las cards)
-    st.markdown(f"""
-    <div class="bias-warning">
-        ⚠️ <b>Nota metodológica:</b> Las métricas anualizadas (Sharpe, Calmar, Retorno anual)
-        se calculan sobre un período de ~2 meses. Interprétalas como indicadores de dirección,
-        no como proyecciones reales de rendimiento anual.
-    </div>
-    """, unsafe_allow_html=True)
+    _warn_icon = "\u26a0\ufe0f"
+    _bias_html = (
+        f'<div class="bias-warning">{_warn_icon} <b>Nota metodologica:</b> ' +
+        "Las metricas anualizadas (Sharpe, Calmar, Retorno anual) "
+        "se calculan sobre un periodo de ~2 meses. "
+        "Interpretalas como indicadores de direccion, no como proyecciones reales.</div>"
+    )
+    st.markdown(_bias_html, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -1231,12 +1233,13 @@ def main():
     # PESTAÑAS PRINCIPALES (tab1 y tab2 sin cambios internos;
     # tab3 mejorado con Drawdown + tabla; tab4 nuevo)
     # ============================================
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📈 Vista Principal",
-        "🧠 Análisis Detallado",
-        "💰 Retorno y Desempeño",
-        "🐦 Composición Política"   # ← TAB NUEVO
-    ])
+    _tab_names = [
+        "\U0001f4c8 Vista Principal",
+        "\U0001f9e0 Analisis Detallado",
+        "\U0001f4b0 Retorno y Desempeno",
+        "\U0001f426 Composicion Politica",
+    ]
+    tab1, tab2, tab3, tab4 = st.tabs(_tab_names)
 
     # ------ TAB 1: sin cambios ------
     with tab1:
@@ -1248,7 +1251,7 @@ def main():
             tc_i = df_filtrado['Compra'].iloc[0]
             tc_f = df_filtrado['Compra'].iloc[-1]
             var_p = (tc_f - tc_i) / tc_i * 100
-            st.caption(f"**TC Variación:** S/ {tc_i:.3f} → S/ {tc_f:.3f} ({var_p:+.2f}%)")
+            st.caption(f"**TC Variación:** S/ {tc_i:.3f} &rarr; S/ {tc_f:.3f} ({var_p:+.2f}%)")
         with col_info3:
             st.caption(f"**Señales:** {metricas['dias_sube']} LONG | {metricas['dias_baja']} SHORT")
         with col_info4:
@@ -1311,7 +1314,7 @@ def main():
 
         # NUEVO: Tabla de operaciones al final de tab1
         st.markdown("---")
-        st.markdown("### 📋 Log de Operaciones Diarias")
+        st.markdown("### " + "\U0001f4cb" + " Log de Operaciones Diarias")
         st.caption("Cada fila es un día de operación. La señal LONG/SHORT la genera el modelo 24h antes.")
         mostrar_tabla_operaciones(df_filtrado)
 
@@ -1338,7 +1341,7 @@ def main():
             corr_sentimiento = df_filtrado['sentimiento_numerico'].corr(df_filtrado['Variacion_Dolar'])
             fortaleza = "Débil" if abs(corr_sentimiento) < 0.3 else "Moderada" if abs(corr_sentimiento) < 0.5 else "Fuerte"
             st.metric("Coeficiente de Correlación (lag 0)", f"{corr_sentimiento:.3f}",
-                      f"Señal {fortaleza} — sentimiento mismo día vs dólar")
+                      f"Señal {fortaleza} - sentimiento mismo dia vs dolar")
             volatilidad = df_filtrado['Variacion_Dolar'].std()
             st.metric("Volatilidad Diaria / Anualizada",
                       f"{volatilidad:.2f}% / {volatilidad * np.sqrt(252):.1f}%",
@@ -1369,12 +1372,12 @@ def main():
                 <b style='color:{COLORES['texto_secundario']};font-size:0.8rem;text-transform:uppercase;
                            letter-spacing:0.5px;'>Resumen de Riesgo</b><br><br>
                 <span style='color:{COLORES['texto']};font-size:0.9rem;'>
-                • Max Drawdown: <b style='color:{COLORES['error']};'>-{ma['max_drawdown']:.2f}%</b><br>
-                • Recovery Factor: <b style='color:{COLORES['exito']};'>{ma['recovery_factor']:.2f}x</b>
+                &bull; Max Drawdown: <b style='color:{COLORES['error']};'>-{ma['max_drawdown']:.2f}%</b><br>
+                &bull; Recovery Factor: <b style='color:{COLORES['exito']};'>{ma['recovery_factor']:.2f}x</b>
                   (retorno / max caída)<br>
-                • Calmar Ratio: <b>{ma['calmar_ratio']:.2f}</b>
+                &bull; Calmar Ratio: <b>{ma['calmar_ratio']:.2f}</b>
                   (ret. anualizado / drawdown)<br>
-                • Win Rate: <b>{ma['win_rate']:.1f}%</b> |
+                &bull; Win Rate: <b>{ma['win_rate']:.1f}%</b> |
                   Avg Win: <b style='color:{COLORES['exito']};'>{ma['avg_win']:+.3f}%</b> |
                   Avg Loss: <b style='color:{COLORES['error']};'>{ma['avg_loss']:+.3f}%</b>
                 </span>
@@ -1412,25 +1415,29 @@ def main():
             st.metric("Sortino Ratio", f"{ma['sortino_ratio']:.2f}", "Ajuste por riesgo bajista")
 
         # Advertencia sesgo temporal
-        st.markdown(f"""
-        <div class="bias-warning">
-            ⚠️ <b>Sesgo temporal:</b> Calmar Ratio {ma['calmar_ratio']:.1f} y Retorno anual ref. {ma['retorno_anualizado']:+.1f}%
-            se calculan linealizando ~2 meses a 252 días. Este período electoral es atípico en volatilidad.
-            Úsalos como referencia relativa, no como proyección.
-        </div>
-        """, unsafe_allow_html=True)
+        _warn2 = "\u26a0\ufe0f"
+        _calmar_val = f"{ma['calmar_ratio']:.1f}"
+        _ret_val = f"{ma['retorno_anualizado']:+.1f}%"
+        _bias2_html = (
+            f'<div class="bias-warning">{_warn2} <b>Sesgo temporal:</b> ' +
+            f"Calmar Ratio {_calmar_val} y Retorno anual ref. {_ret_val} "
+            "se calculan linealizando ~2 meses a 252 dias. "
+            "Este periodo electoral es atipico en volatilidad. "
+            "Usalos como referencia relativa, no como proyeccion.</div>"
+        )
+        st.markdown(_bias2_html, unsafe_allow_html=True)
 
     # ------ TAB 4: NUEVO — Composición Política ------
     with tab4:
-        st.markdown("### 🐦 Composición del Sentimiento Político en Twitter")
+        st.markdown("### " + "\U0001f426" + " Composicion del Sentimiento Politico en Twitter")
         st.markdown(f"""
         <div style='background:{COLORES['fondo_cards']};padding:12px;border-radius:6px;
                     border-left:3px solid {COLORES['primario']};margin-bottom:1rem;'>
-            <span style='color:{COLORES['primario']};font-weight:600;'>¿Por qué importa este gráfico?</span><br>
+            <span style='color:{COLORES['primario']};font-weight:600;'>Por que importa este gráfico?</span><br>
             <span style='color:{COLORES['texto_secundario']};font-size:0.88rem;'>
             La narrativa Anti-Castillo en Twitter se asocia con <b style='color:{COLORES['error']};'>mayor incertidumbre</b>
-            → el mercado huye al dólar → <b>dólar sube</b>. La narrativa Anti-Keiko reduce el miedo
-            al socialismo → <b>dólar baja</b>. Este gráfico muestra cómo esa batalla narrativa evolucionó día a día.
+            &rarr; el mercado huye al dolar &rarr; <b>dolar sube</b>. La narrativa Anti-Keiko reduce el miedo
+            al socialismo &rarr; <b>dolar baja</b>. Este gráfico muestra cómo esa batalla narrativa evolucionó día a día.
             </span>
         </div>
         """, unsafe_allow_html=True)
