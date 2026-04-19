@@ -271,8 +271,8 @@ def cargar_datos_completos():
     """Carga todos los datos del período completo (abril-mayo 2021)"""
     try:
         # Cargar datos del archivo Excel
-        archivo_path = '/content/tweets_GOZU (1)_SENTIMIENTO_MEJORADO.xlsx'
-        df = pd.read_excel(archivo_path)
+        archivo_path = 'tweets_GOZU_SENTIMIENTO_MEJORADO.xlsx'
+        df = pd.read_excel(archivo_path, engine='openpyxl')
 
         # Procesamiento básico
         df['Fecha'] = pd.to_datetime(df['TweetCreateTime']).dt.date
@@ -668,14 +668,14 @@ def crear_grafico_matriz_desempeno(metricas):
 
     # Líneas de referencia
     fig.add_hline(y=50, line_dash="dash", line_color=COLORES['neutro'],
-                 annotation_text="Azar (50%)",
-                 annotation_position="top right",
-                 annotation_font=dict(color=COLORES['texto_secundario']))
+                annotation_text="Azar (50%)",
+                annotation_position="top right",
+                annotation_font=dict(color=COLORES['texto_secundario']))
 
     fig.add_hline(y=60, line_dash="dash", line_color=COLORES['exito_suave'],
-                 annotation_text="Bueno (60%)",
-                 annotation_position="top right",
-                 annotation_font=dict(color=COLORES['exito_suave']))
+                annotation_text="Bueno (60%)",
+                annotation_position="top right",
+                annotation_font=dict(color=COLORES['exito_suave']))
 
     fig.update_layout(
         title=dict(
@@ -798,6 +798,50 @@ def main():
     
     # Guía rápida justo después del título
     mostrar_guia_rapida()
+    
+    # Guía de métricas para traders
+    with st.expander("Guia de Metricas para Traders", expanded=False):
+        st.markdown(f"""
+        <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px;'>
+            <table style='width: 100%; color: {COLORES['texto']}; font-size: 0.85rem;'>
+                <tr style='border-bottom: 1px solid {COLORES['bordes']};'>
+                    <th style='padding: 8px; text-align: left; color: {COLORES['primario']};'>Metrica</th>
+                    <th style='padding: 8px; text-align: left; color: {COLORES['primario']};'>Que Mide</th>
+                    <th style='padding: 8px; text-align: left; color: {COLORES['primario']};'>Valor Objetivo</th>
+                </tr>
+                <tr>
+                    <td style='padding: 8px;'><b>Profit Factor</b></td>
+                    <td style='padding: 8px;'>Ratio entre ganancias totales y perdidas totales</td>
+                    <td style='padding: 8px; color: {COLORES['exito']};'>> 1.5 es bueno</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px;'><b>Recovery Factor</b></td>
+                    <td style='padding: 8px;'>Capacidad de recuperar perdidas</td>
+                    <td style='padding: 8px; color: {COLORES['exito']};'>> 2.0 es bueno</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px;'><b>Expectativa Matematica</b></td>
+                    <td style='padding: 8px;'>Ganancia esperada por operacion</td>
+                    <td style='padding: 8px; color: {COLORES['exito']};'>> 0.15% por dia</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px;'><b>Calmar Ratio</b></td>
+                    <td style='padding: 8px;'>Retorno anual ajustado por maximo drawdown</td>
+                    <td style='padding: 8px; color: {COLORES['exito']};'>> 0.5 es bueno</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px;'><b>Payoff Ratio</b></td>
+                    <td style='padding: 8px;'>Relacion ganancia media / perdida media</td>
+                    <td style='padding: 8px; color: {COLORES['exito']};'>> 1.5 es bueno</td>
+                </tr>
+                <tr>
+                    <td style='padding: 8px;'><b>Sortino Ratio</b></td>
+                    <td style='padding: 8px;'>Rentabilidad ajustada solo por riesgo a la baja</td>
+                    <td style='padding: 8px; color: {COLORES['exito']};'>> 0.3 es bueno</td>
+                </tr>
+            </table>
+        </div>
+        """, unsafe_allow_html=True)
 
     # ============================================
     # SIDEBAR MEJORADO
@@ -1041,73 +1085,52 @@ def main():
         if len(df_filtrado) > 0:
             st.markdown("---")
             st.markdown("### Resumen de Operaciones Destacadas")
-
+            
             col_dest1, col_dest2, col_dest3 = st.columns(3)
-
+            
             with col_dest1:
+                # Mejor operación
                 mejor_idx = df_filtrado['Retorno'].idxmax()
-                mejor_op  = df_filtrado.loc[mejor_idx]
-                _senal_m  = "LONG (aposto a subida)" if mejor_op['Prediccion'] == 1 else "SHORT (aposto a bajada)"
-                _tc_m     = mejor_op['Variacion_Dolar']
-                _mov_m    = "subio" if _tc_m > 0 else "bajo"
-                _expl_m   = (
-                    f"El modelo fue {_senal_m} y el TC {_mov_m} {abs(_tc_m):.3f}%."
-                    " La ganancia es el movimiento capturado."
-                )
+                mejor_op = df_filtrado.loc[mejor_idx]
                 st.markdown(f"""
-                <div style='background:{COLORES['fondo_cards']};padding:14px;border-radius:6px;border-left:3px solid {COLORES['exito']};'>
-                    <b style='color:{COLORES['exito']};font-size:0.95rem;'>Mejor Operacion</b>
-                    <span style='color:{COLORES['texto_secundario']};font-size:0.72rem;float:right;'>{mejor_op['Fecha'].strftime('%d/%m/%Y')}</span><br>
-                    <div style='margin:8px 0 4px 0;font-size:1.6rem;font-weight:800;color:{COLORES['exito']};'>{mejor_op['Retorno']:+.3f}%</div>
-                    <div style='font-size:0.78rem;color:{COLORES['texto_secundario']};margin-bottom:6px;'>ganancia capturada ese dia</div>
-                    <div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};padding:6px 8px;border-radius:4px;line-height:1.5;'>
-                        <b>Señal:</b> {_senal_m}<br>
-                        <b>TC real:</b> {_tc_m:+.3f}% ({_mov_m})<br>
-                        <span style='color:{COLORES['texto_secundario']};font-size:0.74rem;'>{_expl_m}</span>
-                    </div>
+                <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['exito']};'>
+                    <b style='color: {COLORES['exito']};'>Mejor Operación</b><br>
+                    <span style='color: {COLORES['texto_secundario']}; font-size: 0.85rem;'>
+                    Fecha: {mejor_op['Fecha'].strftime('%d/%m/%Y')}<br>
+                    Retorno: <b style='color: {COLORES['exito']};'>{mejor_op['Retorno']:+.3f}%</b><br>
+                    Variación TC: {mejor_op['Variacion_Dolar']:+.3f}%
+                    </span>
                 </div>
                 """, unsafe_allow_html=True)
-
+            
             with col_dest2:
+                # Peor operación
                 peor_idx = df_filtrado['Retorno'].idxmin()
-                peor_op  = df_filtrado.loc[peor_idx]
-                _senal_p = "LONG (aposto a subida)" if peor_op['Prediccion'] == 1 else "SHORT (aposto a bajada)"
-                _tc_p    = peor_op['Variacion_Dolar']
-                _mov_p   = "subio" if _tc_p > 0 else "bajo"
-                _expl_p  = (
-                    f"El modelo fue {_senal_p} pero el TC {_mov_p} {abs(_tc_p):.3f}%."
-                    " La señal fue incorrecta ese dia."
-                )
+                peor_op = df_filtrado.loc[peor_idx]
                 st.markdown(f"""
-                <div style='background:{COLORES['fondo_cards']};padding:14px;border-radius:6px;border-left:3px solid {COLORES['error']};'>
-                    <b style='color:{COLORES['error']};font-size:0.95rem;'>Peor Operacion</b>
-                    <span style='color:{COLORES['texto_secundario']};font-size:0.72rem;float:right;'>{peor_op['Fecha'].strftime('%d/%m/%Y')}</span><br>
-                    <div style='margin:8px 0 4px 0;font-size:1.6rem;font-weight:800;color:{COLORES['error']};'>{peor_op['Retorno']:+.3f}%</div>
-                    <div style='font-size:0.78rem;color:{COLORES['texto_secundario']};margin-bottom:6px;'>perdida ese dia</div>
-                    <div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};padding:6px 8px;border-radius:4px;line-height:1.5;'>
-                        <b>Señal:</b> {_senal_p}<br>
-                        <b>TC real:</b> {_tc_p:+.3f}% ({_mov_p})<br>
-                        <span style='color:{COLORES['texto_secundario']};font-size:0.74rem;'>{_expl_p}</span>
-                    </div>
+                <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['error']};'>
+                    <b style='color: {COLORES['error']};'>Peor Operación</b><br>
+                    <span style='color: {COLORES['texto_secundario']}; font-size: 0.85rem;'>
+                    Fecha: {peor_op['Fecha'].strftime('%d/%m/%Y')}<br>
+                    Retorno: <b style='color: {COLORES['error']};'>{peor_op['Retorno']:+.3f}%</b><br>
+                    Variación TC: {peor_op['Variacion_Dolar']:+.3f}%
+                    </span>
                 </div>
                 """, unsafe_allow_html=True)
-
+            
             with col_dest3:
+                # Día de mayor volatilidad
                 mayor_vol_idx = df_filtrado['Variacion_Dolar'].abs().idxmax()
-                mayor_vol     = df_filtrado.loc[mayor_vol_idx]
-                color_vol     = COLORES['exito'] if mayor_vol['Acierto'] else COLORES['error']
-                _res_vol      = "CORRECTA - el modelo capturo el movimiento" if mayor_vol['Acierto'] else "INCORRECTA - el modelo no lo anticipó"
-                _senal_vol    = "LONG" if mayor_vol['Prediccion'] == 1 else "SHORT"
+                mayor_vol = df_filtrado.loc[mayor_vol_idx]
+                color_vol = COLORES['exito'] if mayor_vol['Acierto'] else COLORES['error']
                 st.markdown(f"""
-                <div style='background:{COLORES['fondo_cards']};padding:14px;border-radius:6px;border-left:3px solid {COLORES['advertencia']};'>
-                    <b style='color:{COLORES['advertencia']};font-size:0.95rem;'>Dia de Mayor Volatilidad</b>
-                    <span style='color:{COLORES['texto_secundario']};font-size:0.72rem;float:right;'>{mayor_vol['Fecha'].strftime('%d/%m/%Y')}</span><br>
-                    <div style='margin:8px 0 4px 0;font-size:1.6rem;font-weight:800;color:{COLORES['advertencia']};'>{mayor_vol['Variacion_Dolar']:+.3f}%</div>
-                    <div style='font-size:0.78rem;color:{COLORES['texto_secundario']};margin-bottom:6px;'>mayor movimiento del TC en el periodo</div>
-                    <div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};padding:6px 8px;border-radius:4px;line-height:1.5;'>
-                        <b>Señal del modelo:</b> {_senal_vol}<br>
-                        <b style='color:{color_vol};'>Resultado: {_res_vol}</b>
-                    </div>
+                <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['advertencia']};'>
+                    <b style='color: {COLORES['advertencia']};'>Mayor Volatilidad</b><br>
+                    <span style='color: {COLORES['texto_secundario']}; font-size: 0.85rem;'>
+                    Fecha: {mayor_vol['Fecha'].strftime('%d/%m/%Y')}<br>
+                    Variación: <b>{mayor_vol['Variacion_Dolar']:+.3f}%</b><br>
+                    Predicción: <b style='color: {color_vol};'>{'Correcta' if mayor_vol['Acierto'] else 'Incorrecta'}</b>
+                    </span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -1118,114 +1141,92 @@ def main():
         fig_combinado = crear_grafico_sentimiento_variacion(df_filtrado)
         st.plotly_chart(fig_combinado, use_container_width=True)
         
-        # Nota informativa sobre tooltips - más compacta y clara
+        # Nota informativa sobre tooltips
         st.markdown(f"""
         <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['primario']}; margin: 10px 0;'>
-            <span style='color: {COLORES['primario']}; font-weight: 600;'>INFO:</span>
+            <span style='color: {COLORES['primario']}; font-weight: 600;'>INFORMACION DETALLADA:</span>
             <span style='color: {COLORES['texto_secundario']}; font-size: 0.9rem;'>
-            Pase el mouse sobre los puntos del gráfico de sentimiento para ver: <b>Influencia predominante</b> (Anti-Castillo/Anti-Keiko/Neutral), 
-            <b>distribución de tweets</b> y <b>razones principales</b> detectadas.
+            Pase el cursor sobre los puntos para ver: Influencia predominante (Anti-Castillo/Anti-Keiko/Neutral), 
+            distribucion de tweets y razones principales detectadas.
             </span>
         </div>
         """, unsafe_allow_html=True)
 
-        # Análisis de tendencias
+        # Analisis Cuantitativo del Modelo - MEJORADO PARA TRADERS
         st.markdown("---")
         st.markdown("### Analisis Cuantitativo del Modelo")
 
-        # Calculos compartidos
-        corr_sentimiento   = df_filtrado['sentimiento_numerico'].corr(df_filtrado['Variacion_Dolar'])
-        volatilidad        = df_filtrado['Variacion_Dolar'].std()
-        volatilidad_anual  = volatilidad * np.sqrt(252)
-        ret_pos_sum        = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].sum()
-        ret_neg_sum        = abs(df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].sum())
-        profit_factor_aq   = ret_pos_sum / ret_neg_sum if ret_neg_sum > 0 else 0
-        expectativa_aq     = df_filtrado['Retorno'].mean()
-        expectativa_anual  = expectativa_aq * 252
-
-        _corr_abs = abs(corr_sentimiento)
-        _dir_corr = "inversa" if corr_sentimiento < 0 else "directa"
-        if _corr_abs < 0.3:
-            _interp_corr = "Relacion debil. La señal existe pero es ruidosa."
-            _col_corr    = COLORES['advertencia']
-        elif _corr_abs < 0.5:
-            _interp_corr = "Relacion moderada. El sentimiento explica parte del movimiento del TC."
-            _col_corr    = COLORES['exito']
-        else:
-            _interp_corr = "Relacion fuerte. El sentimiento es buen predictor del TC."
-            _col_corr    = COLORES['exito']
-
-        _interp_vol = (
-            "Mercado tranquilo: movimientos pequeños, señales mas confiables."
-            if volatilidad < 0.5 else
-            "Mercado volatil: movimientos grandes, mayor oportunidad y mayor riesgo."
-        )
-        _col_pf    = COLORES['exito'] if profit_factor_aq >= 1.5 else COLORES['advertencia']
-        _interp_pf = (
-            "Bueno: por cada sol perdido se ganan mas de S/1.50."
-            if profit_factor_aq >= 1.5 else
-            "Aceptable: las ganancias cubren las perdidas pero el margen es ajustado."
-        )
-        _col_exp   = COLORES['exito'] if expectativa_aq > 0 else COLORES['error']
-        _interp_exp = (
-            f"En promedio el modelo gana {expectativa_aq:+.3f}% por dia operado."
-            if expectativa_aq > 0 else
-            f"En promedio el modelo pierde {expectativa_aq:+.3f}% por dia operado."
-        )
+        # Calcular metricas para analisis
+        corr_sentimiento = df_filtrado['sentimiento_numerico'].corr(df_filtrado['Variacion_Dolar'])
+        volatilidad = df_filtrado['Variacion_Dolar'].std()
+        volatilidad_anualizada = volatilidad * np.sqrt(252)
+        
+        retornos_positivos = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].sum()
+        retornos_negativos = abs(df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].sum())
+        profit_factor = retornos_positivos / retornos_negativos if retornos_negativos > 0 else 0
+        expectativa = df_filtrado['Retorno'].mean()
+        expectativa_anualizada = expectativa * 252
 
         col_analisis1, col_analisis2 = st.columns(2)
 
         with col_analisis1:
-            st.markdown(
-                f"<div style='background:{COLORES['fondo_cards']};border-radius:8px;padding:14px;"
-                f"border:1px solid {COLORES['bordes']};margin-bottom:12px;'>"
-                f"<div style='font-size:0.75rem;color:{COLORES['texto_secundario']};text-transform:uppercase;"
-                f"letter-spacing:0.6px;margin-bottom:4px;'>Correlacion Sentimiento &rarr; Tipo de Cambio</div>"
-                f"<div style='font-size:2rem;font-weight:800;color:{_col_corr};'>{corr_sentimiento:.3f}</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto_secundario']};margin:4px 0;'>"
-                f"Relacion <b>{_dir_corr}</b> | r negativa = sentimiento cae, TC sube</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};"
-                f"padding:6px 8px;border-radius:4px;line-height:1.4;'>{_interp_corr}</div></div>"
-                f"<div style='background:{COLORES['fondo_cards']};border-radius:8px;padding:14px;"
-                f"border:1px solid {COLORES['bordes']};'>"
-                f"<div style='font-size:0.75rem;color:{COLORES['texto_secundario']};text-transform:uppercase;"
-                f"letter-spacing:0.6px;margin-bottom:4px;'>Volatilidad del Tipo de Cambio</div>"
-                f"<div style='font-size:2rem;font-weight:800;color:{COLORES['texto']};'>"
-                f"{volatilidad:.2f}% <span style='font-size:1rem;color:{COLORES['texto_secundario']};'>"
-                f"/ dia</span></div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto_secundario']};margin:4px 0;'>"
-                f"Equivale a {volatilidad_anual:.1f}% anualizado (referencial)</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};"
-                f"padding:6px 8px;border-radius:4px;line-height:1.4;'>{_interp_vol}</div></div>",
-                unsafe_allow_html=True
-            )
+            # Tarjeta de Correlacion
+            fortaleza = "Debil" if abs(corr_sentimiento) < 0.3 else "Moderada" if abs(corr_sentimiento) < 0.5 else "Fuerte"
+            color_corr = COLORES['advertencia'] if abs(corr_sentimiento) < 0.3 else COLORES['exito']
+            direccion = "Inversa" if corr_sentimiento < 0 else "Directa"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 20px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem; margin-bottom: 8px;'>Coeficiente de Correlacion</div>
+                <div style='font-size: 2.5rem; font-weight: 700; color: {color_corr}; margin-bottom: 8px;'>{corr_sentimiento:.3f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem;'>
+                    Relacion {direccion}: Sentimiento vs Tipo de Cambio<br>
+                    <span style='color: {color_corr};'>Senal {fortaleza}</span> (r < 0.3 = debil)
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Tarjeta de Volatilidad
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 20px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; margin-top: 15px; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem; margin-bottom: 8px;'>Volatilidad del Mercado</div>
+                <div style='font-size: 2rem; font-weight: 700; color: {COLORES['advertencia']}; margin-bottom: 8px;'>{volatilidad:.2f}% / {volatilidad_anualizada:.1f}%</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem;'>
+                    Diaria / Anualizada<br>
+                    Medida de riesgo del mercado
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col_analisis2:
-            st.markdown(
-                f"<div style='background:{COLORES['fondo_cards']};border-radius:8px;padding:14px;"
-                f"border:1px solid {COLORES['bordes']};margin-bottom:12px;'>"
-                f"<div style='font-size:0.75rem;color:{COLORES['texto_secundario']};text-transform:uppercase;"
-                f"letter-spacing:0.6px;margin-bottom:4px;'>Profit Factor - calidad de la estrategia</div>"
-                f"<div style='font-size:2rem;font-weight:800;color:{_col_pf};'>{profit_factor_aq:.2f}</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto_secundario']};margin:4px 0;'>"
-                f"suma ganancias / suma perdidas &nbsp;|&nbsp; meta: &gt;1.5</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};"
-                f"padding:6px 8px;border-radius:4px;line-height:1.4;'>{_interp_pf}</div></div>"
-                f"<div style='background:{COLORES['fondo_cards']};border-radius:8px;padding:14px;"
-                f"border:1px solid {COLORES['bordes']};'>"
-                f"<div style='font-size:0.75rem;color:{COLORES['texto_secundario']};text-transform:uppercase;"
-                f"letter-spacing:0.6px;margin-bottom:4px;'>Expectativa por Operacion</div>"
-                f"<div style='font-size:2rem;font-weight:800;color:{_col_exp};'>{expectativa_aq:+.3f}%</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto_secundario']};margin:4px 0;'>"
-                f"ganancia promedio por dia operado</div>"
-                f"<div style='font-size:0.8rem;color:{COLORES['texto']};background:{COLORES['fondo']};"
-                f"padding:6px 8px;border-radius:4px;line-height:1.4;'>"
-                f"{_interp_exp}<br>"
-                f"<span style='color:{COLORES['texto_secundario']};'>"
-                f"Proyeccion referencial: {expectativa_anual:+.1f}% anual "
-                f"(solo referencial, periodo es de 2 meses).</span></div></div>",
-                unsafe_allow_html=True
-            )
+            # Tarjeta de Profit Factor
+            color_pf = COLORES['exito'] if profit_factor > 1.5 else COLORES['advertencia'] if profit_factor > 1.0 else COLORES['error']
+            interpretacion = "Excelente" if profit_factor > 2.0 else "Bueno" if profit_factor > 1.5 else "Aceptable" if profit_factor > 1.0 else "Deficiente"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 20px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem; margin-bottom: 8px;'>Profit Factor</div>
+                <div style='font-size: 2.5rem; font-weight: 700; color: {color_pf}; margin-bottom: 8px;'>{profit_factor:.2f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem;'>
+                    Ratio Ganancia / Perdida<br>
+                    <span style='color: {color_pf};'>{interpretacion}</span> (>1.5 = bueno)
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Tarjeta de Expectativa Matematica
+            color_exp = COLORES['exito'] if expectativa > 0.15 else COLORES['advertencia'] if expectativa > 0 else COLORES['error']
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 20px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; margin-top: 15px; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem; margin-bottom: 8px;'>Expectativa Matematica</div>
+                <div style='font-size: 2rem; font-weight: 700; color: {color_exp}; margin-bottom: 8px;'>{expectativa:+.3f}% / dia</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.9rem;'>
+                    Proyeccion anual: {expectativa_anualizada:+.1f}%<br>
+                    Ganancia esperada por operacion
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     with tab3:
         st.markdown("### Retorno y Desempeño del Modelo")
@@ -1242,171 +1243,176 @@ def main():
             fig_matriz = crear_grafico_matriz_desempeno(metricas)
             st.plotly_chart(fig_matriz, use_container_width=True)
 
-        # Calculos de performance trading
-        _ret_pos   = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].sum()
-        _ret_neg   = abs(df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].sum())
-        _pf        = _ret_pos / _ret_neg if _ret_neg > 0 else 0
-        df_filtrado['Retorno_Max'] = df_filtrado['Retorno_Acumulado'].cummax()
-        df_filtrado['Drawdown']    = df_filtrado['Retorno_Acumulado'] - df_filtrado['Retorno_Max']
-        _max_dd    = abs(df_filtrado['Drawdown'].min())
-        _ret_final = df_filtrado['Retorno_Acumulado'].iloc[-1] if len(df_filtrado) > 0 else 0
-        _rec_f     = _ret_final / _max_dd if _max_dd > 0 else 0
-        _exp       = df_filtrado['Retorno'].mean()
-        _wr        = (df_filtrado['Retorno'] > 0).mean() * 100
-        _avg_w     = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].mean() if (df_filtrado['Retorno'] > 0).any() else 0
-        _avg_l     = df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].mean() if (df_filtrado['Retorno'] < 0).any() else 0
-        _rpd       = df_filtrado['Retorno'].mean()
-        _ret_anual = _rpd * 252
-        _calmar    = _ret_anual / _max_dd if _max_dd > 0 else 0
-        _ap        = df_filtrado[df_filtrado['Acierto']]['Variacion_Dolar'].abs().sum()
-        _tp        = df_filtrado['Variacion_Dolar'].abs().sum()
-        _prec_pond = (_ap / _tp * 100) if _tp > 0 else 0
-        _payoff    = abs(_avg_w / _avg_l) if _avg_l != 0 else 0
-        _std_neg   = df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].std()
-        _sortino   = _rpd / _std_neg if _std_neg > 0 else 0
-
-        # Rachas
-        _mws = _mls = _cw = _cl = 0
-        for _r in df_filtrado['Retorno']:
-            if _r > 0:
-                _cw += 1; _cl = 0; _mws = max(_mws, _cw)
-            elif _r < 0:
-                _cl += 1; _cw = 0; _mls = max(_mls, _cl)
-
+        # Metricas de riesgo y retorno - MEJORADO PARA TRADERS
         st.markdown("---")
         st.markdown("### Analisis de Performance Trading")
-        st.markdown(
-            "<div style='font-size:0.8rem;color:#a0a4b3;margin-bottom:12px;'>"
-            "Las 4 metricas clave de cualquier sistema de trading. "
-            "Pase el mouse sobre el nombre para ver que significa cada una."
-            "</div>",
-            unsafe_allow_html=True
-        )
+
+        # Calcular todas las metricas primero
+        retornos_positivos = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].sum()
+        retornos_negativos = abs(df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].sum())
+        profit_factor = retornos_positivos / retornos_negativos if retornos_negativos > 0 else 0
+        
+        df_filtrado['Retorno_Max'] = df_filtrado['Retorno_Acumulado'].cummax()
+        df_filtrado['Drawdown'] = df_filtrado['Retorno_Acumulado'] - df_filtrado['Retorno_Max']
+        max_drawdown = abs(df_filtrado['Drawdown'].min())
+        retorno_total = df_filtrado['Retorno_Acumulado'].iloc[-1] if len(df_filtrado) > 0 else 0
+        recovery_factor = retorno_total / max_drawdown if max_drawdown > 0 else 0
+        
+        expectativa = df_filtrado['Retorno'].mean()
+        avg_win = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].mean() if (df_filtrado['Retorno'] > 0).any() else 0
+        avg_loss = df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].mean() if (df_filtrado['Retorno'] < 0).any() else 0
+        
+        retorno_promedio_diario = df_filtrado['Retorno'].mean()
+        retorno_anualizado = retorno_promedio_diario * 252
+        calmar_ratio = retorno_anualizado / max_drawdown if max_drawdown > 0 else 0
 
         col_riesgo1, col_riesgo2, col_riesgo3, col_riesgo4 = st.columns(4)
 
-        _C = COLORES
-        def _card(titulo, subtitulo_corto, valor, color_val, descripcion, benchmark):
-            return (
-                f"<div style='background:{_C['fondo_cards']};border-radius:8px;padding:14px;"
-                f"border:1px solid {_C['bordes']};height:100%;'>"
-                f"<div style='font-size:0.7rem;color:{_C['texto_secundario']};text-transform:uppercase;"
-                f"letter-spacing:0.6px;'>{titulo}</div>"
-                f"<div style='font-size:0.65rem;color:{_C['texto_secundario']};margin-bottom:6px;'>{subtitulo_corto}</div>"
-                f"<div style='font-size:1.9rem;font-weight:800;color:{color_val};'>{valor}</div>"
-                f"<div style='font-size:0.75rem;color:{_C['texto_secundario']};margin:5px 0 4px 0;'>"
-                f"Meta: {benchmark}</div>"
-                f"<div style='font-size:0.75rem;color:{_C['texto']};background:{_C['fondo']};"
-                f"padding:5px 7px;border-radius:4px;line-height:1.4;'>{descripcion}</div>"
-                f"</div>"
-            )
-
         with col_riesgo1:
-            _col = _C['exito'] if _pf >= 1.5 else _C['advertencia']
-            _desc = ("Las ganancias superan bien a las perdidas." if _pf >= 1.5
-                     else "Las ganancias apenas cubren las perdidas.")
-            st.markdown(_card(
-                "Profit Factor",
-                "ganancias totales / perdidas totales",
-                f"{_pf:.2f}",
-                _col,
-                _desc,
-                "&gt;1.5 = bueno, &gt;2.0 = excelente"
-            ), unsafe_allow_html=True)
+            color_pf = COLORES['exito'] if profit_factor > 1.5 else COLORES['advertencia'] if profit_factor > 1.0 else COLORES['error']
+            interpretacion = "Excelente" if profit_factor > 2.0 else "Bueno" if profit_factor > 1.5 else "Aceptable" if profit_factor > 1.0 else "Deficiente"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>PROFIT FACTOR</div>
+                <div style='font-size: 2rem; font-weight: 700; color: {color_pf}; margin-bottom: 5px;'>{profit_factor:.2f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem;'>
+                    {interpretacion}<br>
+                    <span style='font-size: 0.75rem;'>Ganancia total / Perdida total</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col_riesgo2:
-            _col = _C['exito'] if _rec_f >= 2 else _C['advertencia']
-            _desc = (f"El modelo recupero {_rec_f:.1f}x su peor caida. "
-                     + ("Muy resiliente." if _rec_f >= 2 else "Recuperacion moderada."))
-            st.markdown(_card(
-                "Recovery Factor",
-                "retorno total / mayor caida (drawdown)",
-                f"{_rec_f:.2f}x",
-                _col,
-                _desc,
-                "&gt;2 = bueno (recupera bien las caidas)"
-            ), unsafe_allow_html=True)
+            color_rf = COLORES['exito'] if recovery_factor > 2 else COLORES['advertencia'] if recovery_factor > 1 else COLORES['error']
+            interpretacion = "Excelente" if recovery_factor > 3 else "Bueno" if recovery_factor > 2 else "Aceptable" if recovery_factor > 1 else "Deficiente"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>RECOVERY FACTOR</div>
+                <div style='font-size: 2rem; font-weight: 700; color: {color_rf}; margin-bottom: 5px;'>{recovery_factor:.2f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem;'>
+                    {interpretacion}<br>
+                    <span style='font-size: 0.75rem;'>Retorno total / Max Drawdown</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col_riesgo3:
-            _col = _C['exito'] if _wr >= 55 else _C['advertencia']
-            _desc = (f"Gana el {_wr:.1f}% de los dias. "
-                     f"Promedio cuando gana: {_avg_w:+.3f}% | cuando pierde: {_avg_l:+.3f}%")
-            st.markdown(_card(
-                "Win Rate",
-                "% de dias con retorno positivo",
-                f"{_wr:.1f}%",
-                _col,
-                _desc,
-                "&gt;55% = mejor que el azar (50%)"
-            ), unsafe_allow_html=True)
+            color_exp = COLORES['exito'] if expectativa > 0.15 else COLORES['advertencia'] if expectativa > 0 else COLORES['error']
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>EXPECTATIVA MATEMATICA</div>
+                <div style='font-size: 2rem; font-weight: 700; color: {color_exp}; margin-bottom: 5px;'>{expectativa:+.3f}%</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem;'>
+                    Ganancia esperada por dia<br>
+                    <span style='font-size: 0.75rem;'>Win: {avg_win:.3f}% | Loss: {avg_loss:.3f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col_riesgo4:
-            _col = _C['exito'] if _sortino >= 0.5 else _C['advertencia']
-            _desc = ("Buen ajuste por riesgo bajista." if _sortino >= 0.5
-                     else "El riesgo a la baja es alto en relacion al retorno.")
-            st.markdown(_card(
-                "Sortino Ratio",
-                "retorno / volatilidad solo de dias perdedores",
-                f"{_sortino:.2f}",
-                _col,
-                _desc,
-                "&gt;0.5 = aceptable, &gt;1 = bueno"
-            ), unsafe_allow_html=True)
-
-        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+            color_calmar = COLORES['exito'] if calmar_ratio > 0.5 else COLORES['advertencia'] if calmar_ratio > 0.2 else COLORES['error']
+            interpretacion = "Excelente" if calmar_ratio > 1.0 else "Bueno" if calmar_ratio > 0.5 else "Aceptable" if calmar_ratio > 0.2 else "Deficiente"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>CALMAR RATIO</div>
+                <div style='font-size: 2rem; font-weight: 700; color: {color_calmar}; margin-bottom: 5px;'>{calmar_ratio:.2f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem;'>
+                    {interpretacion}<br>
+                    <span style='font-size: 0.75rem;'>Retorno anual: {retorno_anualizado:+.1f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Segunda fila de metricas adicionales - MEJORADO PARA TRADERS
+        st.markdown("---")
+        
+        # Calcular metricas adicionales
+        aciertos_ponderados = df_filtrado[df_filtrado['Acierto']]['Variacion_Dolar'].abs().sum()
+        total_ponderado = df_filtrado['Variacion_Dolar'].abs().sum()
+        precision_ponderada = (aciertos_ponderados / total_ponderado * 100) if total_ponderado > 0 else 0
+        
+        payoff_ratio = abs(avg_win / avg_loss) if avg_loss != 0 else 0
+        
+        max_winning_streak = 0
+        max_losing_streak = 0
+        current_win = 0
+        current_loss = 0
+        for retorno in df_filtrado['Retorno']:
+            if retorno > 0:
+                current_win += 1
+                max_winning_streak = max(max_winning_streak, current_win)
+                current_loss = 0
+            elif retorno < 0:
+                current_loss += 1
+                max_losing_streak = max(max_losing_streak, current_loss)
+                current_win = 0
+        
+        retornos_negativos_std = df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].std()
+        sortino_ratio = retorno_promedio_diario / retornos_negativos_std if retornos_negativos_std > 0 else 0
+        
         col_extra1, col_extra2, col_extra3, col_extra4 = st.columns(4)
-
+        
         with col_extra1:
-            _col = _C['exito'] if _payoff >= 1.0 else _C['advertencia']
-            _desc = (f"Cuando gana, gana {_payoff:.2f}x lo que pierde cuando falla. "
-                     + ("Ratio favorable." if _payoff >= 1.0 else "Pierde mas de lo que gana en promedio."))
-            st.markdown(_card(
-                "Payoff Ratio",
-                "ganancia promedio / perdida promedio",
-                f"{_payoff:.2f}",
-                _col,
-                _desc,
-                "&gt;1 = cada ganancia supera cada perdida"
-            ), unsafe_allow_html=True)
-
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>PRECISION PONDERADA</div>
+                <div style='font-size: 1.8rem; font-weight: 700; color: {COLORES['primario']}; margin-bottom: 5px;'>{precision_ponderada:.1f}%</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem;'>
+                    Ajustada por magnitud del movimiento<br>
+                    Mayor peso a dias volatiles
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col_extra2:
-            _col = _C['exito'] if _prec_pond >= 60 else _C['advertencia']
-            _desc = ("El modelo acierta mas en los dias de mayor movimiento, lo que mas importa."
-                     if _prec_pond >= 60 else
-                     "El modelo falla en algunos dias de alto movimiento.")
-            st.markdown(_card(
-                "Precision Ponderada",
-                "aciertos en dias grandes vs. total movimiento",
-                f"{_prec_pond:.1f}%",
-                _col,
-                _desc,
-                "&gt;60% = acierta cuando mas importa"
-            ), unsafe_allow_html=True)
-
+            color_payoff = COLORES['exito'] if payoff_ratio > 1.5 else COLORES['advertencia'] if payoff_ratio > 1.0 else COLORES['error']
+            interpretacion = "Excelente" if payoff_ratio > 2.0 else "Bueno" if payoff_ratio > 1.5 else "Aceptable" if payoff_ratio > 1.0 else "Deficiente"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>PAYOFF RATIO</div>
+                <div style='font-size: 1.8rem; font-weight: 700; color: {color_payoff}; margin-bottom: 5px;'>{payoff_ratio:.2f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem;'>
+                    {interpretacion}<br>
+                    Ganancia media / Perdida media
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col_extra3:
-            st.markdown(_card(
-                "Racha Maxima",
-                "dias consecutivos ganando / perdiendo",
-                f"+{_mws} / -{_mls}",
-                _C['texto'],
-                (f"Mejor racha: {_mws} dias ganadores seguidos. "
-                 f"Peor racha: {_mls} dias perdedores seguidos. "
-                 "Rachas largas de perdidas son señal de alerta."),
-                "racha perdedora &lt;5 = manejable"
-            ), unsafe_allow_html=True)
-
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>RACHA MAXIMA</div>
+                <div style='font-size: 1.8rem; font-weight: 700; margin-bottom: 5px;'>
+                    <span style='color: {COLORES['exito']};'>+{max_winning_streak}</span>
+                    <span style='color: {COLORES['texto_secundario']}'> / </span>
+                    <span style='color: {COLORES['error']};'>-{max_losing_streak}</span>
+                </div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem;'>
+                    Dias consecutivos<br>
+                    Ganadores / Perdedores
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col_extra4:
-            _col = _C['advertencia']
-            st.markdown(_card(
-                "Calmar Ratio",
-                "retorno anualizado / max drawdown",
-                f"{_calmar:.2f}",
-                _col,
-                (f"Retorno anual referencial: {_ret_anual:+.1f}% sobre "
-                 f"una caida maxima de {_max_dd:.2f}%. "
-                 "NOTA: anualizar 2 meses sobreestima este valor."),
-                "&gt;0.5 = bueno (solo referencial aqui)"
-            ), unsafe_allow_html=True)
+            color_sortino = COLORES['exito'] if sortino_ratio > 0.3 else COLORES['advertencia'] if sortino_ratio > 0 else COLORES['error']
+            interpretacion = "Excelente" if sortino_ratio > 0.5 else "Bueno" if sortino_ratio > 0.3 else "Aceptable" if sortino_ratio > 0 else "Deficiente"
+            
+            st.markdown(f"""
+            <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; height: 100%;'>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.8rem; margin-bottom: 5px;'>SORTINO RATIO</div>
+                <div style='font-size: 1.8rem; font-weight: 700; color: {color_sortino}; margin-bottom: 5px;'>{sortino_ratio:.2f}</div>
+                <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem;'>
+                    {interpretacion}<br>
+                    Rentabilidad / Riesgo a la baja
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     # ============================================
     # PIE DE PÁGINA
