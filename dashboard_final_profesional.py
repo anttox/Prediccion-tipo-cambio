@@ -1078,60 +1078,55 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Tabla de resumen de operaciones destacadas
-                # Tabla de resumen de operaciones destacadas
+        # Resumen Ejecutivo del Modelo
         if len(df_filtrado) > 0:
             st.markdown("---")
-            st.markdown("### Resumen de Operaciones Destacadas")
+            st.markdown("### Resumen Ejecutivo del Modelo")
             
-            col_dest1, col_dest2, col_dest3 = st.columns(3)
+            # Calcular métricas adicionales
+            win_rate = (df_filtrado['Retorno'] > 0).mean() * 100
+            avg_win = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].mean() if (df_filtrado['Retorno'] > 0).any() else 0
+            avg_loss = df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].mean() if (df_filtrado['Retorno'] < 0).any() else 0
             
-            with col_dest1:
-                # Mejor operación
-                mejor_idx = df_filtrado['Retorno'].idxmax()
-                mejor_op = df_filtrado.loc[mejor_idx]
+            col_res1, col_res2, col_res3, col_res4 = st.columns(4)
+            
+            with col_res1:
                 st.markdown(f"""
-                <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['exito']};'>
-                    <b style='color: {COLORES['exito']};'>Mejor Operación</b><br>
-                    <span style='color: {COLORES['texto_secundario']}; font-size: 0.85rem;'>
-                    Fecha: {mejor_op['Fecha'].strftime('%d/%m/%Y')}<br>
-                    Retorno: <b style='color: {COLORES['exito']};'>{mejor_op['Retorno']:+.3f}%</b><br>
-                    Variación TC: {mejor_op['Variacion_Dolar']:+.3f}%
-                    </span>
+                <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>WIN RATE</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['exito'] if win_rate >= 50 else COLORES['error']};'>{win_rate:.1f}%</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Operaciones ganadoras</div>
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col_dest2:
-                # Peor operación
-                peor_idx = df_filtrado['Retorno'].idxmin()
-                peor_op = df_filtrado.loc[peor_idx]
+            with col_res2:
                 st.markdown(f"""
-                <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['error']};'>
-                    <b style='color: {COLORES['error']};'>Peor Operación</b><br>
-                    <span style='color: {COLORES['texto_secundario']}; font-size: 0.85rem;'>
-                    Fecha: {peor_op['Fecha'].strftime('%d/%m/%Y')}<br>
-                    Retorno: <b style='color: {COLORES['error']};'>{peor_op['Retorno']:+.3f}%</b><br>
-                    Variación TC: {peor_op['Variacion_Dolar']:+.3f}%
-                    </span>
+                <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>GANANCIA PROMEDIO</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['exito']};'>{avg_win:+.3f}%</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Por operacion ganadora</div>
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col_dest3:
-                # Día de mayor volatilidad
-                mayor_vol_idx = df_filtrado['Variacion_Dolar'].abs().idxmax()
-                mayor_vol = df_filtrado.loc[mayor_vol_idx]
-                color_vol = COLORES['exito'] if mayor_vol['Acierto'] else COLORES['error']
+            with col_res3:
                 st.markdown(f"""
-                <div style='background: {COLORES['fondo_cards']}; padding: 12px; border-radius: 6px; border-left: 3px solid {COLORES['advertencia']};'>
-                    <b style='color: {COLORES['advertencia']};'>Mayor Volatilidad</b><br>
-                    <span style='color: {COLORES['texto_secundario']}; font-size: 0.85rem;'>
-                    Fecha: {mayor_vol['Fecha'].strftime('%d/%m/%Y')}<br>
-                    Variación: <b>{mayor_vol['Variacion_Dolar']:+.3f}%</b><br>
-                    Predicción: <b style='color: {color_vol};'>{'Correcta' if mayor_vol['Acierto'] else 'Incorrecta'}</b>
-                    </span>
+                <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>PERDIDA PROMEDIO</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['error']};'>{avg_loss:+.3f}%</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Por operacion perdedora</div>
                 </div>
                 """, unsafe_allow_html=True)
-
+            
+            with col_res4:
+                payoff = abs(avg_win / avg_loss) if avg_loss != 0 else 0
+                color_payoff = COLORES['exito'] if payoff > 1.5 else COLORES['advertencia'] if payoff > 1.0 else COLORES['error']
+                st.markdown(f"""
+                <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>RATIO GANANCIA/PERDIDA</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {color_payoff};'>{payoff:.2f}x</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Ganancia media / Perdida media</div>
+                </div>
+                """, unsafe_allow_html=True)
     with tab2:
         st.markdown("### Análisis Detallado del Sentimiento y Variación")
 
