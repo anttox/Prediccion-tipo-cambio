@@ -1078,51 +1078,53 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Distribucion de Señales del Modelo
+        # Resumen Ejecutivo del Modelo
         if len(df_filtrado) > 0:
             st.markdown("---")
-            st.markdown("### Distribucion de Señales del Modelo")
+            st.markdown("### Resumen Ejecutivo del Modelo")
             
-            col_sig1, col_sig2, col_sig3 = st.columns(3)
+            # Calcular métricas adicionales
+            win_rate = (df_filtrado['Retorno'] > 0).mean() * 100
+            avg_win = df_filtrado[df_filtrado['Retorno'] > 0]['Retorno'].mean() if (df_filtrado['Retorno'] > 0).any() else 0
+            avg_loss = df_filtrado[df_filtrado['Retorno'] < 0]['Retorno'].mean() if (df_filtrado['Retorno'] < 0).any() else 0
             
-            with col_sig1:
-                total_ops = len(df_filtrado)
-                ops_long = metricas['dias_sube']
-                ops_short = metricas['dias_baja']
+            col_res1, col_res2, col_res3, col_res4 = st.columns(4)
+            
+            with col_res1:
                 st.markdown(f"""
                 <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
-                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>TOTAL OPERACIONES</div>
-                    <div style='font-size: 2.5rem; font-weight: 700; color: {COLORES['primario']};'>{total_ops}</div>
-                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>
-                        <span style='color: {COLORES['exito']};'>{ops_long} LONG</span> | 
-                        <span style='color: {COLORES['error']};'>{ops_short} SHORT</span>
-                    </div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>WIN RATE</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['exito'] if win_rate >= 50 else COLORES['error']};'>{win_rate:.1f}%</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Operaciones ganadoras</div>
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col_sig2:
-                aciertos_long = metricas['aciertos_sube']
-                precision_long = metricas['precision_sube']
+            with col_res2:
                 st.markdown(f"""
                 <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
-                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>SEÑALES LONG (SUBE)</div>
-                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['exito'] if precision_long >= 50 else COLORES['error']};'>{precision_long:.1f}%</div>
-                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>
-                        {aciertos_long} aciertos de {ops_long} señales
-                    </div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>GANANCIA PROMEDIO</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['exito']};'>{avg_win:+.3f}%</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Por operacion ganadora</div>
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col_sig3:
-                aciertos_short = metricas['aciertos_baja']
-                precision_short = metricas['precision_baja']
+            with col_res3:
                 st.markdown(f"""
                 <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
-                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>SEÑALES SHORT (BAJA)</div>
-                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['exito'] if precision_short >= 50 else COLORES['error']};'>{precision_short:.1f}%</div>
-                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>
-                        {aciertos_short} aciertos de {ops_short} señales
-                    </div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>PERDIDA PROMEDIO</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {COLORES['error']};'>{avg_loss:+.3f}%</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Por operacion perdedora</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_res4:
+                payoff = abs(avg_win / avg_loss) if avg_loss != 0 else 0
+                color_payoff = COLORES['exito'] if payoff > 1.5 else COLORES['advertencia'] if payoff > 1.0 else COLORES['error']
+                st.markdown(f"""
+                <div style='background: {COLORES['fondo_cards']}; padding: 15px; border-radius: 8px; border: 1px solid {COLORES['bordes']}; text-align: center;'>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.75rem; margin-bottom: 5px;'>RATIO GANANCIA/PERDIDA</div>
+                    <div style='font-size: 2rem; font-weight: 700; color: {color_payoff};'>{payoff:.2f}x</div>
+                    <div style='color: {COLORES['texto_secundario']}; font-size: 0.7rem;'>Ganancia media / Perdida media</div>
                 </div>
                 """, unsafe_allow_html=True)
     with tab2:
