@@ -1060,7 +1060,7 @@ def main():
             variacion_periodo = ((tipo_cambio_fin - tipo_cambio_inicio) / tipo_cambio_inicio * 100) if tipo_cambio_inicio > 0 else 0
             st.caption(f"**TC Variación:** S/ {tipo_cambio_inicio:.3f} → S/ {tipo_cambio_fin:.3f} ({variacion_periodo:+.2f}%)")
         
-        with col_info4:
+        with col_info3:
             st.caption(f"**Filtro activo:** {filtro_resultado}")
 
         # Crear y mostrar gráfico principal
