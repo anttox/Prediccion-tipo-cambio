@@ -1082,6 +1082,7 @@ def main():
         """, unsafe_allow_html=True)
         
         # Tabla de resumen de operaciones destacadas
+                # Tabla de resumen de operaciones destacadas
         if len(df_filtrado) > 0:
             st.markdown("---")
             st.markdown("### Resumen de Operaciones Destacadas")
